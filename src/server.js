@@ -1,41 +1,65 @@
 import express from 'express';
-
-let articlesInfo = [{
-    name: 'learn-react',
-    upvotes: 0,
-    comments: [],
-}, {
-    name: 'learn-node',
-    upvotes: 0,
-    comments: [],
-}, {
-    name: 'mongodb',
-    upvotes: 0,
-    comments: [],
-}]
+import { MongoClient } from 'mongodb';
 
 const app = express();
 app.use(express.json());
 
-app.put('/api/articles/:name/upvote', (req, res) => {
+app.get('/api/articles/:name', async (req, res) => {
     const { name } = req.params;
-    const article = articlesInfo.find(article => article.name === name);
+
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    await client.connect();
+    const db = client.db('ink-link-db');
+
+    const article = await db.collection('articles').findOne({ name });
+
+    if(article){
+        res.json(article);
+    }
+    else{
+        res.status(404).json({ message: 'Article not found!' });
+    }
+});
+
+app.put('/api/articles/:name/upvote', async (req, res) => {
+    const { name } = req.params;
+
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    await client.connect();
+    const db = client.db('ink-link-db');
+
+    await db.collection('articles').updateOne({ name }, {
+        $inc: {
+            upvotes: 1,
+        },
+    });
+
+    const article = await db.collection('articles').findOne({ name });
 
     if (article) {
-        article.upvotes += 1;
         res.status(200).send(`The ${article.name} article now has ${article.upvotes} upvotes`);
     } else{
         res.status(404).send('Article not found');
     }
 });
 
-app.post('/api/articles/:name/comments', (req, res) => {
+app.post('/api/articles/:name/comments', async (req, res) => {
     const { name } = req.params;
     const { username, text } = req.body;
-    const article = articlesInfo.find(article => article.name === name);
+    
+    const client = new MongoClient('mongodb://127.0.0.1:27017');
+    await client.connect();
+    const db = client.db('ink-link-db');
+
+    await db.collection('articles').updateOne({ name }, {
+        $push: {
+            comments: { username, text },
+        },
+    });
+
+    const article = await db.collection('articles').findOne({ name });
 
     if (article) {
-        article.comments.push({ username, text });
         res.status(200).send(article.comments);
     } else{
         res.status(404).send('Article not found');
