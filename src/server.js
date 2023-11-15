@@ -29,7 +29,7 @@ app.put('/api/articles/:name/upvote', async (req, res) => {
     const article = await db.collection('articles').findOne({ name });
 
     if (article) {
-        res.json(article);
+        res.status(200).json(article);
     } else{
         res.status(404).send('Article not found');
     }
@@ -48,7 +48,7 @@ app.post('/api/articles/:name/comments', async (req, res) => {
     const article = await db.collection('articles').findOne({ name });
 
     if (article) {
-        res.status(200).send(article.comments);
+        res.status(200).json(article);
     } else{
         res.status(404).send('Article not found');
     }
