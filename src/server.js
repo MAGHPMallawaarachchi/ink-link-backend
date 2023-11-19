@@ -20,10 +20,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../build')));
 
-app.get('/home', (req, res) => {
-    res.status(200).json('Welcome, your app is working well');
-})
-
 app.get(/^(?!\/api).+/, (req, res) => {
     res.sendFile(path.join(__dirname, '../build/index.html'));
 });
@@ -116,5 +112,3 @@ connectToDb(() => {
         console.log('Server is listening on port '+PORT);
     });
 })
-
-module.exports = app;
